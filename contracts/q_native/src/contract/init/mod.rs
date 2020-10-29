@@ -1,7 +1,7 @@
 use cosmwasm_std::{Api, Env, Extern, InitResponse, Querier, StdResult, Storage};
 
 use crate::msg::InitMsg;
-use crate::state::{config, Config};
+use crate::state::{config, Config, set_state};
 
 /// Contract instantiation tx
 /// tx inputs are specified in InitMsg in msg.rs file

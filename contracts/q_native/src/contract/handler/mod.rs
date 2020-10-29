@@ -4,6 +4,8 @@ use crate::msg::HandleMsg;
 
 mod collateral;
 mod token;
+mod exponential;
+mod interest_model;
 
 /// General handler for contract tx input
 /// tx inputs are defined HandleMsg enum in msg.rs file

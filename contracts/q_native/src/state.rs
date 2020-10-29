@@ -20,14 +20,18 @@ pub struct Config {
     pub intital_exchange_rate: f64,
 }
 
+/// State struct
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct State {
-    pub cash: Uint128,
-    pub total_reserves: Uint128,
-    pub total_borrows: Uint128,
-    pub interest_rate: f64,
-    pub exchange_rate: f64,
-    pub reserve_factor: f64,
-    pub max_borrow_rate: f64
+    pub cash: u128,
+    pub block_number: u64,
+    pub total_reserves: u128,
+    pub total_borrows: u128,
+    pub interest_rate: u128,
+    pub exchange_rate: u128,
+    pub reserve_factor: u128,
+    pub max_borrow_rate: u128,
+    pub borrow_index: u128
 }
 
 /// Config singleton initialization
@@ -46,13 +50,13 @@ pub fn set_config<S: Storage>(storage: &mut S, config: &Config) -> StdResult<()>
 }
 
 /// Get exchange rate
-pub fn get_state<S: Storage>(storage: &mut S) -> StdResult<Uint128> {
+pub fn get_state<S: Storage>(storage: &S) -> StdResult<State> {
     ReadonlySingleton::new(storage, STATE_PREFIX).load()
 }
 
 /// Set exchange rate
-pub fn set_state<S: Storage>(storage: &mut S, rate: f64) -> StdResult<()> {
-    Singleton::new(storage, STATE_PREFIX).save(&rate)
+pub fn set_state<S: Storage>(storage: &mut S, state: &State) -> StdResult<()> {
+    Singleton::new(storage, STATE_PREFIX).save(state)
 }
 
 /// Get balance from address
