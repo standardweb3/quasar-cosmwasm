@@ -1,38 +1,70 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use cosmwasm_std::{HumanAddr};
+use cosmwasm_std::{HumanAddr, Uint128};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct InitMsg {
-    pub default_name: String,
+    pub name: String,
+    pub total_supply: Uint128,
+    pub decimals: u8,
+    pub symbol: String,
+    pub intital_exchange_rate: f64,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum HandleMsg {
-    SetName {
-        name: String
-    }
+    Mint {},
+    Borrow {},
+    Redeem {},
+    RepayBorrow {},
+    Approve {
+        spender: HumanAddr,
+        amount: Uint128,
+    },
+    Transfer {
+        recipient: HumanAddr,
+        amount: Uint128,
+    },
+    TransferFrom {
+        owner: HumanAddr,
+        recipient: HumanAddr,
+        amount: Uint128,
+    },
+    Burn {
+        amount: Uint128,
+    },
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum QueryMsg {
-    /// Configuration
     Config {},
-    /// Get messages
-    GetMessage {
-        address: HumanAddr
-    }
+    Balance {
+        address: HumanAddr,
+    },
+    Allowance {
+        owner: HumanAddr,
+        spender: HumanAddr,
+    },
 }
 
 #[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema)]
 pub struct ConfigResponse {
-    pub default_name: String 
+    pub name: String,
+    pub total_supply: Uint128,
+    pub decimals: u8,
+    pub symbol: String,
+    pub intital_exchange_rate: f64,
 }
 
 #[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema)]
-pub struct GetMessageResponse {
-    pub greeting: String
+pub struct BalanceResponse {
+    pub balance: Uint128,
+}
+
+#[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema)]
+pub struct AllowanceResponse {
+    pub allowance: Uint128,
 }
