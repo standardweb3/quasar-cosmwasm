@@ -6,7 +6,7 @@ use cosmwasm_storage::{PrefixedStorage, ReadonlyPrefixedStorage};
 
 use std::convert::TryInto;
 
-use crate::state::{ALLOWANCE_PREFIX, BALANCE_PREFIX};
+use crate::state::{ALLOWANCE_PREFIX, BALANCE_PREFIX, get_state, set_state};
 
 pub fn try_repay_borrow<S: Storage, A: Api, Q: Querier>(
     deps: &mut Extern<S, A, Q>,
