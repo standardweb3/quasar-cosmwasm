@@ -1,0 +1,25 @@
+cargo:rustc-cfg=nightly
+TARGET = Some("x86_64-apple-darwin")
+OPT_LEVEL = Some("0")
+HOST = Some("x86_64-apple-darwin")
+CC_x86_64-apple-darwin = None
+CC_x86_64_apple_darwin = None
+HOST_CC = None
+CC = None
+CFLAGS_x86_64-apple-darwin = None
+CFLAGS_x86_64_apple_darwin = None
+HOST_CFLAGS = None
+CFLAGS = None
+CRATE_CC_NO_DEFAULTS = None
+DEBUG = Some("true")
+CARGO_CFG_TARGET_FEATURE = Some("cmpxchg16b,fxsr,sse,sse2,sse3,ssse3")
+running: "cc" "-O0" "-ffunction-sections" "-fdata-sections" "-fPIC" "-g" "-fno-omit-frame-pointer" "-m64" "-arch" "x86_64" "-Wall" "-Wextra" "-o" "/Users/hyungsukkang/quasar-cosmwasm/contracts/q_native/target/debug/build/wasmer-runtime-core-ba25254c8b76b82f/out/image-loading-macos-x86-64.o" "-c" "image-loading-macos-x86-64.s"
+exit code: 0
+AR_x86_64-apple-darwin = None
+AR_x86_64_apple_darwin = None
+HOST_AR = None
+AR = None
+running: "ar" "crs" "/Users/hyungsukkang/quasar-cosmwasm/contracts/q_native/target/debug/build/wasmer-runtime-core-ba25254c8b76b82f/out/libimage-loading.a" "/Users/hyungsukkang/quasar-cosmwasm/contracts/q_native/target/debug/build/wasmer-runtime-core-ba25254c8b76b82f/out/image-loading-macos-x86-64.o"
+exit code: 0
+cargo:rustc-link-lib=static=image-loading
+cargo:rustc-link-search=native=/Users/hyungsukkang/quasar-cosmwasm/contracts/q_native/target/debug/build/wasmer-runtime-core-ba25254c8b76b82f/out

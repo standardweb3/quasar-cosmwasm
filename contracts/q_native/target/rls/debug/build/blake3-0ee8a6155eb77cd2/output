@@ -40,20 +40,20 @@ CFLAGS = None
 CRATE_CC_NO_DEFAULTS = None
 DEBUG = Some("true")
 CARGO_CFG_TARGET_FEATURE = Some("cmpxchg16b,fxsr,sse,sse2,sse3,ssse3")
-running: "cc" "-O0" "-ffunction-sections" "-fdata-sections" "-fPIC" "-g" "-fno-omit-frame-pointer" "-m64" "-arch" "x86_64" "-Wall" "-Wextra" "-std=c11" "-o" "/Users/hyungsukkang/quasar-cosmwasm/contracts/qToken/target/rls/debug/build/blake3-0ee8a6155eb77cd2/out/c/blake3_sse2_x86-64_unix.o" "-c" "c/blake3_sse2_x86-64_unix.S"
+running: "cc" "-O0" "-ffunction-sections" "-fdata-sections" "-fPIC" "-g" "-fno-omit-frame-pointer" "-m64" "-arch" "x86_64" "-Wall" "-Wextra" "-std=c11" "-o" "/Users/hyungsukkang/quasar-cosmwasm/contracts/q_native/target/rls/debug/build/blake3-0ee8a6155eb77cd2/out/c/blake3_sse2_x86-64_unix.o" "-c" "c/blake3_sse2_x86-64_unix.S"
 exit code: 0
-running: "cc" "-O0" "-ffunction-sections" "-fdata-sections" "-fPIC" "-g" "-fno-omit-frame-pointer" "-m64" "-arch" "x86_64" "-Wall" "-Wextra" "-std=c11" "-o" "/Users/hyungsukkang/quasar-cosmwasm/contracts/qToken/target/rls/debug/build/blake3-0ee8a6155eb77cd2/out/c/blake3_sse41_x86-64_unix.o" "-c" "c/blake3_sse41_x86-64_unix.S"
+running: "cc" "-O0" "-ffunction-sections" "-fdata-sections" "-fPIC" "-g" "-fno-omit-frame-pointer" "-m64" "-arch" "x86_64" "-Wall" "-Wextra" "-std=c11" "-o" "/Users/hyungsukkang/quasar-cosmwasm/contracts/q_native/target/rls/debug/build/blake3-0ee8a6155eb77cd2/out/c/blake3_sse41_x86-64_unix.o" "-c" "c/blake3_sse41_x86-64_unix.S"
 exit code: 0
-running: "cc" "-O0" "-ffunction-sections" "-fdata-sections" "-fPIC" "-g" "-fno-omit-frame-pointer" "-m64" "-arch" "x86_64" "-Wall" "-Wextra" "-std=c11" "-o" "/Users/hyungsukkang/quasar-cosmwasm/contracts/qToken/target/rls/debug/build/blake3-0ee8a6155eb77cd2/out/c/blake3_avx2_x86-64_unix.o" "-c" "c/blake3_avx2_x86-64_unix.S"
+running: "cc" "-O0" "-ffunction-sections" "-fdata-sections" "-fPIC" "-g" "-fno-omit-frame-pointer" "-m64" "-arch" "x86_64" "-Wall" "-Wextra" "-std=c11" "-o" "/Users/hyungsukkang/quasar-cosmwasm/contracts/q_native/target/rls/debug/build/blake3-0ee8a6155eb77cd2/out/c/blake3_avx2_x86-64_unix.o" "-c" "c/blake3_avx2_x86-64_unix.S"
 exit code: 0
 AR_x86_64-apple-darwin = None
 AR_x86_64_apple_darwin = None
 HOST_AR = None
 AR = None
-running: "ar" "crs" "/Users/hyungsukkang/quasar-cosmwasm/contracts/qToken/target/rls/debug/build/blake3-0ee8a6155eb77cd2/out/libblake3_sse2_sse41_avx2_assembly.a" "/Users/hyungsukkang/quasar-cosmwasm/contracts/qToken/target/rls/debug/build/blake3-0ee8a6155eb77cd2/out/c/blake3_sse2_x86-64_unix.o" "/Users/hyungsukkang/quasar-cosmwasm/contracts/qToken/target/rls/debug/build/blake3-0ee8a6155eb77cd2/out/c/blake3_sse41_x86-64_unix.o" "/Users/hyungsukkang/quasar-cosmwasm/contracts/qToken/target/rls/debug/build/blake3-0ee8a6155eb77cd2/out/c/blake3_avx2_x86-64_unix.o"
+running: "ar" "crs" "/Users/hyungsukkang/quasar-cosmwasm/contracts/q_native/target/rls/debug/build/blake3-0ee8a6155eb77cd2/out/libblake3_sse2_sse41_avx2_assembly.a" "/Users/hyungsukkang/quasar-cosmwasm/contracts/q_native/target/rls/debug/build/blake3-0ee8a6155eb77cd2/out/c/blake3_sse2_x86-64_unix.o" "/Users/hyungsukkang/quasar-cosmwasm/contracts/q_native/target/rls/debug/build/blake3-0ee8a6155eb77cd2/out/c/blake3_sse41_x86-64_unix.o" "/Users/hyungsukkang/quasar-cosmwasm/contracts/q_native/target/rls/debug/build/blake3-0ee8a6155eb77cd2/out/c/blake3_avx2_x86-64_unix.o"
 exit code: 0
 cargo:rustc-link-lib=static=blake3_sse2_sse41_avx2_assembly
-cargo:rustc-link-search=native=/Users/hyungsukkang/quasar-cosmwasm/contracts/qToken/target/rls/debug/build/blake3-0ee8a6155eb77cd2/out
+cargo:rustc-link-search=native=/Users/hyungsukkang/quasar-cosmwasm/contracts/q_native/target/rls/debug/build/blake3-0ee8a6155eb77cd2/out
 cargo:rerun-if-env-changed=CARGO_FEATURE_PURE
 cargo:rerun-if-env-changed=CARGO_FEATURE_PREFER_INTRINSICS
 cargo:rustc-cfg=blake3_avx512_ffi
@@ -71,16 +71,16 @@ CFLAGS = None
 CRATE_CC_NO_DEFAULTS = None
 DEBUG = Some("true")
 CARGO_CFG_TARGET_FEATURE = Some("cmpxchg16b,fxsr,sse,sse2,sse3,ssse3")
-running: "cc" "-O0" "-ffunction-sections" "-fdata-sections" "-fPIC" "-g" "-fno-omit-frame-pointer" "-m64" "-arch" "x86_64" "-Wall" "-Wextra" "-std=c11" "-mavx512f" "-mavx512vl" "-o" "/Users/hyungsukkang/quasar-cosmwasm/contracts/qToken/target/rls/debug/build/blake3-0ee8a6155eb77cd2/out/c/blake3_avx512_x86-64_unix.o" "-c" "c/blake3_avx512_x86-64_unix.S"
+running: "cc" "-O0" "-ffunction-sections" "-fdata-sections" "-fPIC" "-g" "-fno-omit-frame-pointer" "-m64" "-arch" "x86_64" "-Wall" "-Wextra" "-std=c11" "-mavx512f" "-mavx512vl" "-o" "/Users/hyungsukkang/quasar-cosmwasm/contracts/q_native/target/rls/debug/build/blake3-0ee8a6155eb77cd2/out/c/blake3_avx512_x86-64_unix.o" "-c" "c/blake3_avx512_x86-64_unix.S"
 exit code: 0
 AR_x86_64-apple-darwin = None
 AR_x86_64_apple_darwin = None
 HOST_AR = None
 AR = None
-running: "ar" "crs" "/Users/hyungsukkang/quasar-cosmwasm/contracts/qToken/target/rls/debug/build/blake3-0ee8a6155eb77cd2/out/libblake3_avx512_assembly.a" "/Users/hyungsukkang/quasar-cosmwasm/contracts/qToken/target/rls/debug/build/blake3-0ee8a6155eb77cd2/out/c/blake3_avx512_x86-64_unix.o"
+running: "ar" "crs" "/Users/hyungsukkang/quasar-cosmwasm/contracts/q_native/target/rls/debug/build/blake3-0ee8a6155eb77cd2/out/libblake3_avx512_assembly.a" "/Users/hyungsukkang/quasar-cosmwasm/contracts/q_native/target/rls/debug/build/blake3-0ee8a6155eb77cd2/out/c/blake3_avx512_x86-64_unix.o"
 exit code: 0
 cargo:rustc-link-lib=static=blake3_avx512_assembly
-cargo:rustc-link-search=native=/Users/hyungsukkang/quasar-cosmwasm/contracts/qToken/target/rls/debug/build/blake3-0ee8a6155eb77cd2/out
+cargo:rustc-link-search=native=/Users/hyungsukkang/quasar-cosmwasm/contracts/q_native/target/rls/debug/build/blake3-0ee8a6155eb77cd2/out
 cargo:rerun-if-env-changed=CARGO_FEATURE_NEON
 cargo:rerun-if-env-changed=CC
 cargo:rerun-if-env-changed=CFLAGS

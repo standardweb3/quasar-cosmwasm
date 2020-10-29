@@ -1,8 +1,9 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use cosmwasm_std::{CanonicalAddr, StdError, StdResult, Storage, Uint128};
-use cosmwasm_storage::{singleton, Bucket, ReadonlyBucket, ReadonlySingleton, Singleton};
+use cosmwasm_std::{CanonicalAddr, StdError, StdResult, Storage, Uint128, ReadonlyStorage};
+use cosmwasm_storage::{singleton, Bucket, ReadonlyBucket, ReadonlySingleton, Singleton, ReadonlyPrefixedStorage, PrefixedStorage};
+use std::convert::TryInto;
 
 pub static CONFIG_PREFIX: &[u8] = b"config";
 pub static BALANCE_PREFIX: &[u8] = b"balances";
