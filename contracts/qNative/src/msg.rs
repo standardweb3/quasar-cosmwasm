@@ -16,7 +16,6 @@ pub struct InitMsg {
 #[serde(rename_all = "snake_case")]
 pub enum HandleMsg {
     Mint {},
-    Borrow {},
     Redeem {},
     RepayBorrow {},
     Approve {

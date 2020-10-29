@@ -52,3 +52,54 @@ pub fn get_state<S: Storage>(storage: &mut S) -> StdResult<Uint128> {
 pub fn set_state<S: Storage>(storage: &mut S, rate: f64) -> StdResult<()> {
     Singleton::new(storage, STATE_PREFIX).save(&rate)
 }
+
+/// Get balance from address
+pub fn get_balance<S: Storage>(store: &S, owner: &CanonicalAddr) -> StdResult<u128> {
+    let balance_store = ReadonlyPrefixedStorage::new(BALANCE_PREFIX, store);
+    to_u128(&balance_store, owner.as_slice())
+}
+
+// Reads 16 byte storage value into u128
+// Returns zero if key does not exist. Errors if data found that is not 16 bytes
+pub fn to_u128<S: ReadonlyStorage>(store: &S, key: &[u8]) -> StdResult<u128> {
+    let result = store.get(key);
+    match result {
+        Some(data) => bytes_to_u128(&data),
+        None => Ok(0u128),
+    }
+}
+
+// Converts 16 bytes value into u128
+// Errors if data found that is not 16 bytes
+pub fn bytes_to_u128(data: &[u8]) -> StdResult<u128> {
+    match data[0..16].try_into() {
+        Ok(bytes) => Ok(u128::from_be_bytes(bytes)),
+        Err(_) => Err(StdError::generic_err(
+            "Corrupted data found. 16 byte expected.",
+        )),
+    }
+}
+
+/// Get allowance from address
+pub fn get_allowance<S: Storage>(
+    store: &S,
+    owner: &CanonicalAddr,
+    spender: &CanonicalAddr,
+) -> StdResult<u128> {
+    let allowances_store = ReadonlyPrefixedStorage::new(ALLOWANCE_PREFIX, store);
+    let owner_store = ReadonlyPrefixedStorage::new(owner.as_slice(), &allowances_store);
+    to_u128(&owner_store, spender.as_slice())
+}
+
+/// Set allowance from address
+pub fn set_allowance<S: Storage>(
+    store: &mut S,
+    owner: &CanonicalAddr,
+    spender: &CanonicalAddr,
+    amount: u128,
+) -> StdResult<()> {
+    let mut allowances_store = PrefixedStorage::new(ALLOWANCE_PREFIX, store);
+    let mut owner_store = PrefixedStorage::new(owner.as_slice(), &mut allowances_store);
+    owner_store.set(spender.as_slice(), &amount.to_be_bytes());
+    Ok(())
+}

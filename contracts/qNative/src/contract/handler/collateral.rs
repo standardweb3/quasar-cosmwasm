@@ -8,26 +8,47 @@ use std::convert::TryInto;
 
 use crate::state::{ALLOWANCE_PREFIX, BALANCE_PREFIX};
 
-pub fn try_borrow<S: Storage, A: Api, Q: Querier>(
+pub fn try_repay_borrow<S: Storage, A: Api, Q: Querier>(
     deps: &mut Extern<S, A, Q>,
     env: Env,
-    recipient: &HumanAddr,
-    amount: &Uint128,
 ) -> StdResult<HandleResponse> {
+    let res = HandleResponse {
+        messages: vec![],
+        log: vec![
+            log("action", "transfer"),
+            log("sender", env.message.sender.as_str()),
+        ],
+        data: None,
+    };
+    Ok(res)
 }
 
 pub fn try_mint<S: Storage, A: Api, Q: Querier>(
     deps: &mut Extern<S, A, Q>,
     env: Env,
-    recipient: &HumanAddr,
-    amount: &Uint128,
 ) -> StdResult<HandleResponse> {
+    let res = HandleResponse {
+        messages: vec![],
+        log: vec![
+            log("action", "transfer"),
+            log("sender", env.message.sender.as_str()),
+        ],
+        data: None,
+    };
+    Ok(res)
 }
 
 pub fn try_redeem<S: Storage, A: Api, Q: Querier>(
     deps: &mut Extern<S, A, Q>,
     env: Env,
-    recipient: &HumanAddr,
-    amount: &Uint128,
 ) -> StdResult<HandleResponse> {
+    let res = HandleResponse {
+        messages: vec![],
+        log: vec![
+            log("action", "transfer"),
+            log("sender", env.message.sender.as_str()),
+        ],
+        data: None,
+    };
+    Ok(res)
 }

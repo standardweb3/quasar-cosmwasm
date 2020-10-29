@@ -2,6 +2,7 @@ use cosmwasm_std::{Api, Empty, Env, Extern, HandleResponse, Querier, StdResult, 
 
 use crate::msg::HandleMsg;
 
+mod collateral;
 mod token;
 
 /// General handler for contract tx input
@@ -21,8 +22,8 @@ pub fn handle<S: Storage, A: Api, Q: Querier>(
             recipient,
             amount,
         } => token::try_transfer_from(deps, env, &owner, &recipient, &amount),
-        HandleMsg::Mint {} => StdResult::<()>,
-        HandleMsg::Redeem {} => StdResult::<()>,
-        HandleMsg::RepayBorrow {} => StdResult::<()>,
+        HandleMsg::Mint {} => collateral::try_mint(deps, env),
+        HandleMsg::Redeem {} => collateral::try_redeem(deps, env),
+        HandleMsg::RepayBorrow {} => collateral::try_repay_borrow(deps, env),
     }
 }
