@@ -9,7 +9,8 @@ pub struct InitMsg {
     pub total_supply: Uint128,
     pub decimals: u8,
     pub symbol: String,
-    pub intital_exchange_rate: f64,
+    pub intital_exchange_rate: Uint128,
+    pub reserve_factor: Uint128
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -52,7 +53,8 @@ pub struct ConfigResponse {
     pub total_supply: Uint128,
     pub decimals: u8,
     pub symbol: String,
-    pub intital_exchange_rate: f64,
+    pub intital_exchange_rate: Uint128,
+    pub reserve_factor: Uint128
 }
 
 #[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema)]

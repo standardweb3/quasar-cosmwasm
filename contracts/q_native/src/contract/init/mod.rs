@@ -12,10 +12,11 @@ pub fn init<S: Storage, A: Api, Q: Querier>(
 ) -> StdResult<InitResponse> {
     let state = Config {
         name: msg.name,
-        total_supply: msg.total_supply,
+        total_supply: msg.total_supply.u128(),
         decimals: msg.decimals,
         symbol: msg.symbol,
-        intital_exchange_rate: msg.intital_exchange_rate,
+        initial_exchange_rate: msg.intital_exchange_rate.u128(),
+        reserve_factor: msg.reserve_factor.u128()
     };
 
     config(&mut deps.storage).save(&state)?;

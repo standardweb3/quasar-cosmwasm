@@ -6,7 +6,7 @@ pub static  multiplier_per_block: u128 = 23; // 0.000000237823 * 10^8
 pub static  base_rate_per_block: u128 = 0; 
 pub static  jump_multiplier_per_block: u128 = 51; // 0.000000518455 * 10^8;
 pub static kink: u128 =  80_000_000; // 0.8 * 10^8
-pub static config_reserve_factor: u128 = 5_000_000; // 0.05 * 10^8
+//pub static config_reserve_factor: u128 = 5_000_000; // 0.05 * 10^8
 
 pub fn get_utilization_rate(cash: &u128, borrows: &u128, reserves: &u128) -> u128 {
     if (*borrows == 0u128) {

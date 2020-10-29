@@ -5,10 +5,11 @@ use cosmwasm_std::{
 
 use std::convert::TryInto;
 
-use crate::state::{get_state, set_state};
+use crate::state::{get_state, set_state, get_config, set_config};
 
 use crate::contract::handler::interest_model::{get_borrow_rate};
 use crate::contract::handler::exponential::truncate;
+use crate::contract::handler::token::mint_tokens;
 
 pub fn try_repay_borrow<S: Storage, A: Api, Q: Querier>(
     deps: &mut Extern<S, A, Q>,
@@ -32,14 +33,36 @@ pub fn try_mint<S: Storage, A: Api, Q: Querier>(
 
     accrue_interest(deps, env.clone())?;
 
+    let current_block = env.block.height;
 
+    // Check native currency transfer
+    let mint_amount = env.message.sent_funds[0].amount.u128(); 
+
+    // Get exchange rate derived from borrow and reserve
+    let exchange_rate = get_exchange_rate(deps, env.clone())?;
+
+    let token_mint_amount = truncate(mint_amount / exchange_rate * 100_000_000);
+
+    // Set new config
+    let mut new_config = get_config(&deps.storage)?;
+    new_config.total_supply += token_mint_amount;
+
+    set_config(&mut deps.storage, &new_config);
+
+    // Mint token to the sender
+    let recipient_address_raw = deps.api.canonical_address(&env.message.sender)?;
+    mint_tokens(
+        &mut deps.storage,
+        &recipient_address_raw,
+        token_mint_amount,
+    )?;
 
     let res = HandleResponse {
         messages: vec![],
         log: vec![
             log("action", "mint"),
             log("sender", env.message.sender.as_str()),
-            log("minted_amount", 0)
+            log("minted_amount", token_mint_amount.clone())
         ],
         data: None,
     };
@@ -61,7 +84,7 @@ pub fn try_redeem<S: Storage, A: Api, Q: Querier>(
     Ok(res)
 }
 
-fn accrue_interest<S: Storage, A: Api, Q: Querier>(deps: &mut Extern<S, A, Q>, env: Env) -> StdResult<HandleResponse> {
+fn accrue_interest<S: Storage, A: Api, Q: Querier>(deps: &mut Extern<S, A, Q>, env: Env) -> StdResult<()>  {
     let prior_state = get_state(&deps.storage)?;
 
     let borrow_rate = get_borrow_rate(&prior_state.cash, &prior_state.total_borrows, &prior_state.total_reserves);
@@ -86,7 +109,7 @@ fn accrue_interest<S: Storage, A: Api, Q: Querier>(deps: &mut Extern<S, A, Q>, e
     let new_total_reserves = truncate(accumulated_interest * prior_state.reserve_factor) + prior_state.total_reserves;
     let new_borrow_index = truncate(simple_interest_factor * prior_state.borrow_index) + prior_state.borrow_index;
 
-    // Setup new state
+    // Set new state
     let mut new_state = get_state(&deps.storage)?;
     new_state.block_number = env.block.height; 
     new_state.borrow_index = new_borrow_index;
@@ -95,12 +118,26 @@ fn accrue_interest<S: Storage, A: Api, Q: Querier>(deps: &mut Extern<S, A, Q>, e
 
     set_state(&mut deps.storage, &new_state);
 
-    let mock_res = HandleResponse {
-        messages: vec![],
-        log: vec![
-        ],
-        data: None,
-    };
 
-    Ok(mock_res)
+    Ok(())
+}
+
+fn get_exchange_rate<S: Storage, A: Api, Q: Querier>(deps: &mut Extern<S, A, Q>, env: Env) -> StdResult<u128> {
+    let config = get_config(&deps.storage)?;
+    
+    // if total supply is zero
+    if config.total_supply == 0 {
+        return Ok(config.initial_exchange_rate);
+    }
+    // else calculate exchange rate
+    let prior_state = get_state(&deps.storage)?;
+
+    let total_cash = prior_state.cash;
+
+    let cash_plus_borrows_minus_reserves = total_cash + prior_state.total_borrows - prior_state.total_reserves;
+
+    let exchange_rate = cash_plus_borrows_minus_reserves * 100_000_000 / config.total_supply;
+
+
+    Ok(exchange_rate)
 }

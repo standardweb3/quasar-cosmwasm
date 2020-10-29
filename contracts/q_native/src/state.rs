@@ -14,10 +14,11 @@ pub static STATE_PREFIX: &[u8] = b"state";
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct Config {
     pub name: String,
-    pub total_supply: Uint128,
+    pub total_supply: u128,
     pub decimals: u8,
     pub symbol: String,
-    pub intital_exchange_rate: f64,
+    pub initial_exchange_rate: u128,
+    pub reserve_factor: u128
 }
 
 /// State struct
