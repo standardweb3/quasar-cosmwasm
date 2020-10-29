@@ -32,9 +32,6 @@ pub enum HandleMsg {
         recipient: HumanAddr,
         amount: Uint128,
     },
-    Burn {
-        amount: Uint128,
-    },
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]

@@ -2,12 +2,13 @@ use cosmwasm_std::{
     log, Api, Binary, CanonicalAddr, Env, Extern, HandleResponse, HumanAddr, InitResponse, Querier,
     ReadonlyStorage, StdError, StdResult, Storage, Uint128,
 };
+use cosmwasm_storage::{PrefixedStorage, ReadonlyPrefixedStorage};
 
 use std::convert::TryInto;
 
-use crate::state::{get_config, set_config, ALLOWANCE_PREFIX, BALANCE_PREFIX};
+use crate::state::{ALLOWANCE_PREFIX, BALANCE_PREFIX};
 
-fn try_transfer<S: Storage, A: Api, Q: Querier>(
+pub fn try_transfer<S: Storage, A: Api, Q: Querier>(
     deps: &mut Extern<S, A, Q>,
     env: Env,
     recipient: &HumanAddr,
@@ -36,7 +37,7 @@ fn try_transfer<S: Storage, A: Api, Q: Querier>(
     Ok(res)
 }
 
-fn try_transfer_from<S: Storage, A: Api, Q: Querier>(
+pub fn try_transfer_from<S: Storage, A: Api, Q: Querier>(
     deps: &mut Extern<S, A, Q>,
     env: Env,
     owner: &HumanAddr,
@@ -82,7 +83,7 @@ fn try_transfer_from<S: Storage, A: Api, Q: Querier>(
     Ok(res)
 }
 
-fn try_approve<S: Storage, A: Api, Q: Querier>(
+pub fn try_approve<S: Storage, A: Api, Q: Querier>(
     deps: &mut Extern<S, A, Q>,
     env: Env,
     spender: &HumanAddr,
@@ -105,50 +106,6 @@ fn try_approve<S: Storage, A: Api, Q: Querier>(
         ],
         data: None,
     };
-    Ok(res)
-}
-
-/// Burn tokens
-///
-/// Remove `amount` tokens from the system irreversibly, from signer account
-///
-/// @param amount the amount of money to burn
-fn try_burn<S: Storage, A: Api, Q: Querier>(
-    deps: &mut Extern<S, A, Q>,
-    env: Env,
-    amount: &Uint128,
-) -> StdResult<HandleResponse> {
-    let owner_address_raw = deps.api.canonical_address(&env.message.sender)?;
-    let amount_raw = amount.u128();
-
-    let mut account_balance = get_balance(&deps.storage, &owner_address_raw)?;
-
-    if account_balance < amount_raw {
-        return Err(StdError::generic_err(format!(
-            "insufficient funds to burn: balance={}, required={}",
-            account_balance, amount_raw
-        )));
-    }
-    account_balance -= amount_raw;
-
-    let mut balances_store = PrefixedStorage::new(BALANCE_PREFIX, &mut deps.storage);
-    balances_store.set(owner_address_raw.as_slice(), &account_balance.to_be_bytes());
-
-    let mut config_store = get_config(&deps.storage)?;
-    config_store.total_supply = (config_store.total_supply - Uint128(amount_raw))?;
-
-    set_config(&deps.storage, config_store);
-
-    let res = HandleResponse {
-        messages: vec![],
-        log: vec![
-            log("action", "burn"),
-            log("account", env.message.sender.as_str()),
-            log("amount", &amount.to_string()),
-        ],
-        data: None,
-    };
-
     Ok(res)
 }
 

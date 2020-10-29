@@ -12,17 +12,17 @@ pub fn handle<S: Storage, A: Api, Q: Querier>(
     msg: HandleMsg,
 ) -> StdResult<HandleResponse<Empty>> {
     match msg {
-        HandleMsg::Approve { spender, amount } => {
-            token::try_approve(deps, env, info, &spender, &amount)
-        }
+        HandleMsg::Approve { spender, amount } => token::try_approve(deps, env, &spender, &amount),
         HandleMsg::Transfer { recipient, amount } => {
-            token::try_transfer(deps, env, info, &recipient, &amount)
+            token::try_transfer(deps, env, &recipient, &amount)
         }
         HandleMsg::TransferFrom {
             owner,
             recipient,
             amount,
-        } => token::try_transfer_from(deps, env, info, &owner, &recipient, &amount),
-        HandleMsg::Burn { amount } => token::try_burn(deps, env, info, &amount),
+        } => token::try_transfer_from(deps, env, &owner, &recipient, &amount),
+        HandleMsg::Mint {} => StdResult::<()>,
+        HandleMsg::Redeem {} => StdResult::<()>,
+        HandleMsg::RepayBorrow {} => StdResult::<()>,
     }
 }

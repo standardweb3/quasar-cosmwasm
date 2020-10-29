@@ -1,4 +1,4 @@
-use cosmwasm_std::{log, to_binary, Api, Binary, Extern, Querier, StdResult, Storage};
+use cosmwasm_std::{to_binary, Api, Binary, Extern, Querier, StdResult, Storage};
 
 use crate::msg::{ConfigResponse, QueryMsg};
 use crate::state::get_config;
