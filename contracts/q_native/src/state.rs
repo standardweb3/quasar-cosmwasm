@@ -21,12 +21,13 @@ pub struct Config {
 }
 
 pub struct State {
-    pub underlying_asset: Uint128,
+    pub cash: Uint128,
     pub total_reserves: Uint128,
     pub total_borrows: Uint128,
     pub interest_rate: f64,
     pub exchange_rate: f64,
     pub reserve_factor: f64,
+    pub max_borrow_rate: f64
 }
 
 /// Config singleton initialization

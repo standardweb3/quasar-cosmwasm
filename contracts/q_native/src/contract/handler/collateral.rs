@@ -8,6 +8,8 @@ use std::convert::TryInto;
 
 use crate::state::{ALLOWANCE_PREFIX, BALANCE_PREFIX, get_state, set_state};
 
+use crate::handler::interest_rates::*;
+
 pub fn try_repay_borrow<S: Storage, A: Api, Q: Querier>(
     deps: &mut Extern<S, A, Q>,
     env: Env,
@@ -15,7 +17,7 @@ pub fn try_repay_borrow<S: Storage, A: Api, Q: Querier>(
     let res = HandleResponse {
         messages: vec![],
         log: vec![
-            log("action", "transfer"),
+            log("action", "repay_borrow"),
             log("sender", env.message.sender.as_str()),
         ],
         data: None,
@@ -30,8 +32,9 @@ pub fn try_mint<S: Storage, A: Api, Q: Querier>(
     let res = HandleResponse {
         messages: vec![],
         log: vec![
-            log("action", "transfer"),
+            log("action", "mint"),
             log("sender", env.message.sender.as_str()),
+            log("minted_amount", Uint128::from(0))
         ],
         data: None,
     };
@@ -45,10 +48,16 @@ pub fn try_redeem<S: Storage, A: Api, Q: Querier>(
     let res = HandleResponse {
         messages: vec![],
         log: vec![
-            log("action", "transfer"),
+            log("action", "redeem"),
             log("sender", env.message.sender.as_str()),
         ],
         data: None,
     };
     Ok(res)
+}
+
+fn accrue_interest<S: Storage, A: Api, Q: Querier>(deps: &mut Extern<S, A, Q>) -> StdResult<HandleResponse> {
+    let prior_state = get_state(&deps.storage);
+
+    let borrow_rate = get_borrow_rate(prior_state.cash, prior_state.total_borrows, prior_state.total_reserves);
 }
