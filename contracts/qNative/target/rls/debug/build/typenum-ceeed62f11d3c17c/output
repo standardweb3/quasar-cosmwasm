@@ -1,0 +1,2 @@
+cargo:rustc-env=TYPENUM_BUILD_CONSTS=/Users/hyungsukkang/quasar-cosmwasm/contracts/qToken/target/rls/debug/build/typenum-ceeed62f11d3c17c/out/consts.rs
+cargo:rustc-env=TYPENUM_BUILD_OP=/Users/hyungsukkang/quasar-cosmwasm/contracts/qToken/target/rls/debug/build/typenum-ceeed62f11d3c17c/out/op.rs
