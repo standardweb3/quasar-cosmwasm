@@ -19,7 +19,10 @@ pub struct Config {
     pub decimals: u8,
     pub symbol: String,
     pub initial_exchange_rate: u128,
-    pub reserve_factor: u128
+    pub reserve_factor: u128,
+    pub borrow_index: u128,
+    pub max_borrow_rate: u128,
+    pub denom: String,
 }
 
 /// State struct
@@ -29,7 +32,6 @@ pub struct State {
     pub block_number: u64,
     pub total_reserves: u128,
     pub total_borrows: u128,
-    pub interest_rate: u128,
     pub exchange_rate: u128,
     pub reserve_factor: u128,
     pub max_borrow_rate: u128,

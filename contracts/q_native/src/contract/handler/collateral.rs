@@ -1,6 +1,6 @@
 use cosmwasm_std::{
     log, Api, Binary, CanonicalAddr, Env, Extern, HandleResponse, HumanAddr, InitResponse, Querier,
-    ReadonlyStorage, StdError, StdResult, Storage, Uint128, BankMsg
+    ReadonlyStorage, StdError, StdResult, Storage, Uint128, BankMsg, CosmosMsg, Coin
 };
 
 use std::convert::TryInto;
@@ -238,7 +238,7 @@ pub fn try_redeem<S: Storage, A: Api, Q: Querier>(
         to_address: env.message.sender.clone(),
         amount: vec![Coin {
             denom: "uluna".to_string(),
-            amount: redeem_native.clone(),
+            amount: Uint128::from(redeem_native.clone()),
         }],
     });
 

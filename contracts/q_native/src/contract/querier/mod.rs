@@ -15,8 +15,10 @@ pub fn query<S: Storage, A: Api, Q: Querier>(
                 total_supply: Uint128::from(config.total_supply),
                 decimals: config.decimals,
                 symbol: config.symbol,
+                denom: config.denom,
                 intital_exchange_rate: Uint128::from(config.initial_exchange_rate),
-                reserve_factor: Uint128::from(config.reserve_factor)
+                reserve_factor: Uint128::from(config.reserve_factor),
+                borrow_index: Uint128::from(config.borrow_index)
             })?;
             Ok(out)
         }
