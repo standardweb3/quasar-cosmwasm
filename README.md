@@ -19,7 +19,7 @@ Developers can run the implementation and test with client sdk from its Cosmos S
 
 Here are the instructions that one should follow on setting up the environment to hack this project.
 
-#### Terra
+### Terra
 
 First, install [houston](https://github.com/terra-project/houston).
 
@@ -28,8 +28,6 @@ npm install -g @terra-money/houston
 ```
 
 In case of Testing on Terra you can connect to datahub from Figment or run localterra on the device then deploy contracts in local environment.
-
-#### Localterra
 
 Clone localterra repo and run docker-compose in the project root directory.
 
