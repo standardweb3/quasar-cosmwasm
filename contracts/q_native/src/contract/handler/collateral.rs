@@ -50,7 +50,7 @@ pub fn try_borrow<S: Storage, A: Api, Q: Querier>(
     if state.cash < borrow_amount.u128() { 
         return Err(StdError::generic_err(format!(
             "The lending pool has insufficient cash: redeem_amount: {}, pool_reserve: {}",
-             redeem_native, state.cash)
+             borrow_amount, state.cash)
             )
         );
     }
@@ -58,22 +58,22 @@ pub fn try_borrow<S: Storage, A: Api, Q: Querier>(
     // Get borrow balance of the sender
     let sender_raw = deps.api.canonical_address(&env.message.sender)?;
     // get borrow balance
-    let account_borrow = get_account_borrow(deps, env.clone());
-    let new_account_borrow = account_borrow +  borrow_amount.u128();
+    let account_borrow = get_account_borrow(deps, env.clone())?;
+    let new_account_borrow = account_borrow + borrow_amount.u128();
     
 
     // Set new cash amount for contract
     let mut new_state = get_state(&deps.storage)?;
-    new_state.cash -= mint_amount;
+    new_state.cash -= borrow_amount.u128();
     new_state.total_borrows += borrow_amount.u128();
-    set_state(&mut deps.storage, new_state);
+    set_state(&mut deps.storage, &new_state);
 
     // Set new borrow balance for the sender
     let new_borrow_balance = BorrowSnapshot {
         principal: new_account_borrow,
-        interestIndex: new_state.borrow_index
-    }
-    set_borrow_balance(&deps.storage, &sender_raw, &new_borrow_balance);
+        interest_index: new_state.borrow_index
+    };
+    set_borrow_balance(&mut deps.storage, &sender_raw, Some(new_borrow_balance));
     
     
     let res = HandleResponse {
@@ -123,7 +123,7 @@ pub fn try_mint<S: Storage, A: Api, Q: Querier>(
     // Set new cash amount for contract
     let mut new_state = get_state(&deps.storage)?;
     new_state.cash += mint_amount;
-    set_state(&mut deps.storage, new_state);
+    set_state(&mut deps.storage, &new_state);
 
     set_config(&mut deps.storage, &new_config)?;
 
@@ -178,22 +178,24 @@ pub fn try_redeem<S: Storage, A: Api, Q: Querier>(
         );
     }
     // Calculate redeem amount
-    let (redeem_native, redeem_tokens) = match redeem_tokens_in.u128() {
+    let (redeem_native, redeem_tokens, new_state) = match redeem_tokens_in.u128() {
         x if x > 0 => {
             // Set new cash amount for contract
-            let mut new_state = get_state(&deps.storage)?;
-            new_state.cash -= mint_amount;
-            set_state(&mut deps.storage, new_state);
-            return (truncate(exchange_rate * 100_000_000 * redeem_tokens_in.u128()), redeem_tokens_in.u128()); 
+            let mut new_state = state.clone();
+            let redeem_native = truncate(exchange_rate * 100_000_000 * redeem_tokens_in.u128());
+            new_state.cash -= redeem_native;
+            (redeem_native, redeem_tokens_in.u128(), new_state) 
         },
         _ => {
             // Set new cash amount for contract
-            let mut new_state = get_state(&deps.storage)?;
-            new_state.cash += mint_amount;
-            set_state(&mut deps.storage, new_state);
-            return (redeem_native_in, truncate(redeem_native_in / (100_000_000 * exchange_rate)));
+            let mut new_state = state.clone();
+            new_state.cash += redeem_native_in;
+            (redeem_native_in, truncate(redeem_native_in / (100_000_000 * exchange_rate)), new_state)
         }
     };
+
+    // Set new state for cash
+    set_state(&mut deps.storage, &new_state);
 
     // Set new config
     let mut new_config = get_config(&deps.storage)?;
@@ -297,30 +299,30 @@ fn get_exchange_rate<S: Storage, A: Api, Q: Querier>(deps: &mut Extern<S, A, Q>,
 
 
 fn get_account_borrow<S: Storage, A: Api, Q: Querier>(deps: &mut Extern<S, A, Q>, env: Env) -> StdResult<u128> {
-    let sender_raw = deps.api.canonical_address(env.message.sender)?;
-    let snapshot = get_borrow_balance(&deps.storage, owner: &sender_raw);
+    let sender_raw = deps.api.canonical_address(&env.message.sender)?;
+    let snapshot = get_borrow_balance(&deps.storage, &sender_raw);
     
-    let borrow_snapsot = match borrow_snapshot {
-        Some(_) => {
-            _
+    let borrow_snapshot = match snapshot {
+        Some(s) => {
+            s
         },
         None => {
             let init_borrow_snapshot = BorrowSnapshot {
                 principal: 0,
-                borrow_index: 0
-            }
-            set_borrow_balance(&deps.storage, &sender_raw, init_borrow_snapshot)?;
+                interest_index: 0
+            };
+            set_borrow_balance(&mut deps.storage, &sender_raw, Some(init_borrow_snapshot.clone()))?;
             init_borrow_snapshot
         }
-    }
+    };
 
     if borrow_snapshot.principal == 0 {
         // if borrow balance is 0, then borrow index is likey also 0.
         // Hence, return 0 in this case.
-        return 0
+        return Ok(0)
     }
 
     let state = get_state(&deps.storage)?;
     let principal_time_index = borrow_snapshot.principal * state.borrow_index;
-    return principal_time_index / borrow_snapsot.interest_index;
+    return Ok(principal_time_index / borrow_snapshot.interest_index);
 }
