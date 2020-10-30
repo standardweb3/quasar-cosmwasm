@@ -1,6 +1,6 @@
 use cosmwasm_std::{
-    log, Api, Binary, CanonicalAddr, Env, Extern, HandleResponse, HumanAddr, InitResponse, Querier,
-    ReadonlyStorage, StdError, StdResult, Storage, Uint128, BankMsg, CosmosMsg, Coin
+    log, Api, Env, Extern, HandleResponse,  Querier,
+     StdError, StdResult, Storage, Uint128, BankMsg, CosmosMsg, Coin
 };
 
 use std::convert::TryInto;
@@ -12,7 +12,7 @@ use crate::contract::handler::exponential::truncate;
 use crate::contract::handler::token::{mint_tokens, burn_tokens};
 
 pub fn try_repay_borrow<S: Storage, A: Api, Q: Querier>(
-    deps: &mut Extern<S, A, Q>,
+    _deps: &mut Extern<S, A, Q>,
     env: Env,
 ) -> StdResult<HandleResponse> {
     let res = HandleResponse {
@@ -47,7 +47,7 @@ pub fn try_borrow<S: Storage, A: Api, Q: Querier>(
     // TODO: get query from controller contract whether the sender is allowed to borrow
 
     // Check if the pool has enough balance to lend to the sender
-    if state.cash < borrow_amount.u128() { 
+    if state.cash < borrow_amount { 
         return Err(StdError::generic_err(format!(
             "The lending pool has insufficient cash: redeem_amount: {}, pool_reserve: {}",
              borrow_amount, state.cash)
@@ -64,16 +64,16 @@ pub fn try_borrow<S: Storage, A: Api, Q: Querier>(
 
     // Set new cash amount for contract
     let mut new_state = get_state(&deps.storage)?;
-    new_state.cash -= borrow_amount.u128();
-    new_state.total_borrows += borrow_amount.u128();
-    set_state(&mut deps.storage, &new_state);
+    new_state.cash =(new_state.cash - borrow_amount)?;
+    new_state.total_borrows += borrow_amount;
+    set_state(&mut deps.storage, &new_state)?;
 
     // Set new borrow balance for the sender
     let new_borrow_balance = BorrowSnapshot {
-        principal: new_account_borrow,
+        principal: Uint128::from(new_account_borrow),
         interest_index: new_state.borrow_index
     };
-    set_borrow_balance(&mut deps.storage, &sender_raw, Some(new_borrow_balance));
+    set_borrow_balance(&mut deps.storage, &sender_raw, Some(new_borrow_balance))?;
     
     // Transfer native token to the user
     // TODO: in this case it is hard coded to luna, include denom in contract config
@@ -128,12 +128,12 @@ pub fn try_mint<S: Storage, A: Api, Q: Querier>(
 
     // Set new config
     let mut new_config = get_config(&deps.storage)?;
-    new_config.total_supply += token_mint_amount;
+    new_config.total_supply += Uint128::from(token_mint_amount);
 
     // Set new cash amount for contract
     let mut new_state = get_state(&deps.storage)?;
-    new_state.cash += mint_amount;
-    set_state(&mut deps.storage, &new_state);
+    new_state.cash += Uint128::from(mint_amount);
+    set_state(&mut deps.storage, &new_state)?;
 
     set_config(&mut deps.storage, &new_config)?;
 
@@ -193,23 +193,23 @@ pub fn try_redeem<S: Storage, A: Api, Q: Querier>(
             // Set new cash amount for contract
             let mut new_state = state.clone();
             let redeem_native = truncate(exchange_rate * 100_000_000 * redeem_tokens_in.u128());
-            new_state.cash -= redeem_native;
+            new_state.cash = (new_state.cash - Uint128::from(redeem_native))?;
             (redeem_native, redeem_tokens_in.u128(), new_state) 
         },
         _ => {
             // Set new cash amount for contract
             let mut new_state = state.clone();
-            new_state.cash += redeem_native_in;
+            new_state.cash += Uint128::from(redeem_native_in);
             (redeem_native_in, truncate(redeem_native_in / (100_000_000 * exchange_rate)), new_state)
         }
     };
 
     // Set new state for cash
-    set_state(&mut deps.storage, &new_state);
+    set_state(&mut deps.storage, &new_state)?;
 
     // Set new config
     let mut new_config = get_config(&deps.storage)?;
-    new_config.total_supply -= redeem_tokens;
+    new_config.total_supply = (new_config.total_supply - Uint128::from(redeem_tokens))?;
     set_config(&mut deps.storage, &new_config)?;
 
     
@@ -223,7 +223,7 @@ pub fn try_redeem<S: Storage, A: Api, Q: Querier>(
     )?;
 
     // Check if the pool has enough balance
-    if state.cash < redeem_native {
+    if state.cash < Uint128::from(redeem_native) {
         return Err(StdError::generic_err(format!(
             "The lending pool has insufficient cash: redeem_amount: {}, pool_reserve: {}",
              redeem_native, state.cash)
@@ -265,7 +265,7 @@ fn accrue_interest<S: Storage, A: Api, Q: Querier>(deps: &mut Extern<S, A, Q>, e
 
     let borrow_rate = get_borrow_rate(&prior_state.cash, &prior_state.total_borrows, &prior_state.total_reserves);
 
-    if borrow_rate > prior_state.max_borrow_rate {
+    if borrow_rate > prior_state.max_borrow_rate.u128() {
         return Err(StdError::generic_err(format!(
             "borrow rate is absurdly high: borrow_rate: {}, max_borrow_rate: {}",
              borrow_rate, prior_state.max_borrow_rate)
@@ -280,17 +280,17 @@ fn accrue_interest<S: Storage, A: Api, Q: Querier>(deps: &mut Extern<S, A, Q>, e
     // Calculate the interest accumulated into borrows and reserves and the new index:
     let simple_interest_factor = borrow_rate * block_delta;
 
-    let accumulated_interest = truncate(simple_interest_factor * prior_state.total_borrows);
-    let new_total_borrows = accumulated_interest + prior_state.total_borrows;
-    let new_total_reserves = truncate(accumulated_interest * prior_state.reserve_factor) + prior_state.total_reserves;
-    let new_borrow_index = truncate(simple_interest_factor * prior_state.borrow_index) + prior_state.borrow_index;
+    let accumulated_interest = truncate(simple_interest_factor * prior_state.total_borrows.u128());
+    let new_total_borrows = accumulated_interest + prior_state.total_borrows.u128();
+    let new_total_reserves = truncate(accumulated_interest * prior_state.reserve_factor.u128()) + prior_state.total_reserves.u128();
+    let new_borrow_index = truncate(simple_interest_factor * prior_state.borrow_index.u128()) + prior_state.borrow_index.u128();
 
     // Set new state
     let mut new_state = get_state(&deps.storage)?;
     new_state.block_number = env.block.height; 
-    new_state.borrow_index = new_borrow_index;
-    new_state.total_borrows = new_total_borrows;
-    new_state.total_reserves = new_total_reserves;
+    new_state.borrow_index = Uint128::from(new_borrow_index);
+    new_state.total_borrows = Uint128::from(new_total_borrows);
+    new_state.total_reserves = Uint128::from(new_total_reserves);
 
     set_state(&mut deps.storage, &new_state)?;
 
@@ -298,21 +298,21 @@ fn accrue_interest<S: Storage, A: Api, Q: Querier>(deps: &mut Extern<S, A, Q>, e
     Ok(())
 }
 
-fn get_exchange_rate<S: Storage, A: Api, Q: Querier>(deps: &mut Extern<S, A, Q>, env: Env) -> StdResult<u128> {
+fn get_exchange_rate<S: Storage, A: Api, Q: Querier>(deps: &mut Extern<S, A, Q>, _env: Env) -> StdResult<u128> {
     let config = get_config(&deps.storage)?;
     
     // if total supply is zero
-    if config.total_supply == 0 {
-        return Ok(config.initial_exchange_rate);
+    if config.total_supply == Uint128::from(0u128) {
+        return Ok(config.initial_exchange_rate.u128());
     }
     // else calculate exchange rate
     let prior_state = get_state(&deps.storage)?;
 
     let total_cash = prior_state.cash;
 
-    let cash_plus_borrows_minus_reserves = total_cash + prior_state.total_borrows - prior_state.total_reserves;
+    let cash_plus_borrows_minus_reserves = (total_cash + prior_state.total_borrows - prior_state.total_reserves)?;
 
-    let exchange_rate = cash_plus_borrows_minus_reserves * 100_000_000 / config.total_supply;
+    let exchange_rate = cash_plus_borrows_minus_reserves.u128() * 100_000_000 / config.total_supply.u128();
 
 
     Ok(exchange_rate)
@@ -329,21 +329,21 @@ fn get_account_borrow<S: Storage, A: Api, Q: Querier>(deps: &mut Extern<S, A, Q>
         },
         None => {
             let init_borrow_snapshot = BorrowSnapshot {
-                principal: 0,
-                interest_index: 0
+                principal: Uint128::from(0u128),
+                interest_index: Uint128::from(0u128)
             };
             set_borrow_balance(&mut deps.storage, &sender_raw, Some(init_borrow_snapshot.clone()))?;
             init_borrow_snapshot
         }
     };
 
-    if borrow_snapshot.principal == 0 {
+    if borrow_snapshot.principal == Uint128::from(0u128) {
         // if borrow balance is 0, then borrow index is likey also 0.
         // Hence, return 0 in this case.
         return Ok(0)
     }
 
     let state = get_state(&deps.storage)?;
-    let principal_time_index = borrow_snapshot.principal * state.borrow_index;
-    return Ok(principal_time_index / borrow_snapshot.interest_index);
+    let principal_time_index = borrow_snapshot.principal.u128() * state.borrow_index.u128();
+    return Ok(principal_time_index / borrow_snapshot.interest_index.u128());
 }

@@ -1,0 +1,53 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Config",
+  "description": "Config struct",
+  "type": "object",
+  "required": [
+    "borrow_index",
+    "decimals",
+    "denom",
+    "initial_exchange_rate",
+    "max_borrow_rate",
+    "name",
+    "reserve_factor",
+    "symbol",
+    "total_supply"
+  ],
+  "properties": {
+    "borrow_index": {
+      "$ref": "#/definitions/Uint128"
+    },
+    "decimals": {
+      "type": "integer",
+      "format": "uint8",
+      "minimum": 0.0
+    },
+    "denom": {
+      "type": "string"
+    },
+    "initial_exchange_rate": {
+      "$ref": "#/definitions/Uint128"
+    },
+    "max_borrow_rate": {
+      "$ref": "#/definitions/Uint128"
+    },
+    "name": {
+      "type": "string"
+    },
+    "reserve_factor": {
+      "$ref": "#/definitions/Uint128"
+    },
+    "symbol": {
+      "type": "string"
+    },
+    "total_supply": {
+      "$ref": "#/definitions/Uint128"
+    }
+  },
+  "definitions": {
+    "Uint128": {
+      "type": "string"
+    }
+  }
+}

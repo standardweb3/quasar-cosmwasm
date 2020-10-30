@@ -15,33 +15,33 @@ pub static BORROW_PREFIX: &[u8] = b"borrow";
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct Config {
     pub name: String,
-    pub total_supply: u128,
+    pub total_supply: Uint128,
     pub decimals: u8,
     pub symbol: String,
-    pub initial_exchange_rate: u128,
-    pub reserve_factor: u128,
-    pub borrow_index: u128,
-    pub max_borrow_rate: u128,
+    pub initial_exchange_rate: Uint128,
+    pub reserve_factor: Uint128,
+    pub borrow_index: Uint128,
+    pub max_borrow_rate: Uint128,
     pub denom: String,
 }
 
 /// State struct
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct State {
-    pub cash: u128,
+    pub cash: Uint128,
     pub block_number: u64,
-    pub total_reserves: u128,
-    pub total_borrows: u128,
-    pub exchange_rate: u128,
-    pub reserve_factor: u128,
-    pub max_borrow_rate: u128,
-    pub borrow_index: u128
+    pub total_reserves: Uint128,
+    pub total_borrows: Uint128,
+    pub exchange_rate: Uint128,
+    pub reserve_factor: Uint128,
+    pub max_borrow_rate: Uint128,
+    pub borrow_index: Uint128
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct BorrowSnapshot {
-    pub principal: u128,
-    pub interest_index: u128
+    pub principal: Uint128,
+    pub interest_index: Uint128
 }
 
 /// Config singleton initialization

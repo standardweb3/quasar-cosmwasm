@@ -9,7 +9,7 @@ pub struct InitMsg {
     pub total_supply: Uint128,
     pub decimals: u8,
     pub symbol: String,
-    pub intital_exchange_rate: Uint128,
+    pub initial_exchange_rate: Uint128,
     pub reserve_factor: Uint128,
     pub borrow_index: Uint128,
     pub max_borrow_rate: Uint128,
@@ -22,6 +22,9 @@ pub enum HandleMsg {
     Mint {},
     Redeem {
         redeem_tokens_in: Uint128
+    },
+    Borrow {
+        borrow_amount: Uint128
     },
     RepayBorrow {},
     Approve {

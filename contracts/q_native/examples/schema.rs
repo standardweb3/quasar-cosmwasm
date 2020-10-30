@@ -4,8 +4,8 @@ use std::path::{Path, PathBuf};
 
 use cosmwasm_schema::{export_schema, remove_schemas, schema_for};
 
-use qToken::msg::*;
-use qToken::state::*;
+use q_native::msg::*;
+use q_native::state::*;
 
 fn main() {
     let mut out_dir: PathBuf = current_dir().unwrap().parent().unwrap().parent().unwrap().to_path_buf();
@@ -19,5 +19,4 @@ fn main() {
     export_schema(&schema_for!(QueryMsg), &out_dir);
     export_schema(&schema_for!(Config), &out_dir);
     export_schema(&schema_for!(ConfigResponse), &out_dir);
-    export_schema(&schema_for!(GetMessageResponse), &out_dir);
 }

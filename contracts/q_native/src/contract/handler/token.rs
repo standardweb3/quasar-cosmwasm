@@ -4,7 +4,7 @@ use cosmwasm_std::{
 };
 use cosmwasm_storage::{PrefixedStorage, ReadonlyPrefixedStorage};
 
-use std::convert::TryInto;
+//use std::convert::TryInto;
 
 use crate::state::{
     bytes_to_u128, get_allowance, get_balance, set_allowance, to_u128, ALLOWANCE_PREFIX,
