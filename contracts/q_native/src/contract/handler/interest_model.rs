@@ -19,7 +19,7 @@ pub fn get_utilization_rate(cash: &Uint128, borrows: &Uint128, reserves: &Uint12
 pub fn get_borrow_rate(cash: &Uint128, borrows: &Uint128, reserves: &Uint128) -> u128 {
     let util = get_utilization_rate(cash, borrows, reserves);
 
-    if (util <= kink) {
+    if util <= kink {
         return util * multiplier_per_block + base_rate_per_block;
     } else {
         let normal_rate = kink * multiplier_per_block + base_rate_per_block;

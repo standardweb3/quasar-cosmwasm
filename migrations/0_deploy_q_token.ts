@@ -1,3 +1,5 @@
+import { StdFee } from "@terra-money/terra.js";
+
 const {
   MnemonicKey,
   LCDClient,
@@ -14,7 +16,7 @@ async function deploy() {
   // Setup an account with key from mnemonic phrases
   const mk1 = new MnemonicKey({
     mnemonic:
-      "notice oak worry limit wrap speak medal online prefer cluster roof addict wrist behave treat actual wasp year salad speed social layer crew genius",
+      "symbol force gallery make bulk round subway violin worry mixture penalty kingdom boring survey tool fringe patrol sausage hard admit remember broken alien absorb",
   });
   // Setup a network provider to connect
   const terra = new LCDClient({
@@ -48,7 +50,7 @@ async function deploy() {
   const storeCodeTxResult = await terra.tx.broadcast(storeCodeTx);
   const qTokenId = storeCodeTxResult.logs[0].events[1].attributes[1].value;
 
-  console.log("Starter code id", qTokenId);
+  console.log("qLuna code id", qTokenId);
   // Cosmwasm smart contracts need to instantiate from the uploaded wasmer executable binary.
   const instantiateStarter = new MsgInstantiateContract(
     test1.key.accAddress,
@@ -92,14 +94,17 @@ async function deploy() {
     {
       mint: {},
     },
-    new Coins([new Coin("uluna", "1000000000000")])
+    new Coins([new Coin("uluna", "100000000")])
   );
 
   const interactTx = await test1.createAndSignTx({
     msgs: [mintQLuna],
+    fee: new StdFee(500000, {uluna:600000})
   });
 
-  const interactTxResult = await terra.tx.broadcast(interactTx);
+  const interactTxResult = await terra.tx.broadcast(interactTx).catch((error: any) => {
+    console.log(error);
+  });;;
 
   console.log(interactTxResult);
 }

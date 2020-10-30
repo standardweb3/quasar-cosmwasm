@@ -105,7 +105,7 @@ pub fn try_mint<S: Storage, A: Api, Q: Querier>(
 ) -> StdResult<HandleResponse> {
 
     accrue_interest(deps, env.clone())?;
-
+    
     let current_block = env.block.height;
     let state = get_state(&deps.storage)?;
     if current_block != state.block_number {
@@ -115,6 +115,7 @@ pub fn try_mint<S: Storage, A: Api, Q: Querier>(
             )
         );
     }
+    
 
     // TODO: get query from controller contract whether the sender is allowed to borrow
 
@@ -124,7 +125,7 @@ pub fn try_mint<S: Storage, A: Api, Q: Querier>(
     // Get exchange rate derived from borrow and reserve
     let exchange_rate = get_exchange_rate(deps, env.clone())?;
 
-    let token_mint_amount = truncate(mint_amount / exchange_rate * 100_000_000);
+    let token_mint_amount = truncate(mint_amount * exchange_rate);
 
     // Set new config
     let mut new_config = get_config(&deps.storage)?;
@@ -312,7 +313,7 @@ fn get_exchange_rate<S: Storage, A: Api, Q: Querier>(deps: &mut Extern<S, A, Q>,
 
     let cash_plus_borrows_minus_reserves = (total_cash + prior_state.total_borrows - prior_state.total_reserves)?;
 
-    let exchange_rate = cash_plus_borrows_minus_reserves.u128() * 100_000_000 / config.total_supply.u128();
+    let exchange_rate = cash_plus_borrows_minus_reserves.u128() / config.total_supply.u128() * 100_000_000;
 
 
     Ok(exchange_rate)
@@ -347,3 +348,4 @@ fn get_account_borrow<S: Storage, A: Api, Q: Querier>(deps: &mut Extern<S, A, Q>
     let principal_time_index = borrow_snapshot.principal.u128() * state.borrow_index.u128();
     return Ok(principal_time_index / borrow_snapshot.interest_index.u128());
 }
+
