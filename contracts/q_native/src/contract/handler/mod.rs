@@ -25,7 +25,7 @@ pub fn handle<S: Storage, A: Api, Q: Querier>(
             amount,
         } => token::try_transfer_from(deps, env, &owner, &recipient, &amount),
         HandleMsg::Mint {} => collateral::try_mint(deps, env),
-        HandleMsg::Redeem {} => collateral::try_redeem(deps, env),
+        HandleMsg::Redeem {redeem_tokens_in} => collateral::try_redeem(deps, env, redeem_tokens_in),
         HandleMsg::RepayBorrow {} => collateral::try_repay_borrow(deps, env),
     }
 }

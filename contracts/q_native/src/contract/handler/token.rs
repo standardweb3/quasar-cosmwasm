@@ -152,3 +152,18 @@ pub fn mint_tokens<T: Storage>(
 
     Ok(())
 }
+
+
+pub fn burn_tokens<T: Storage>(
+    store: &mut T,
+    to: &CanonicalAddr,
+    amount: u128,
+) -> StdResult<()> {
+    let mut balances_store = PrefixedStorage::new(BALANCE_PREFIX, store);
+
+    let mut to_balance = to_u128(&balances_store, to.as_slice())?;
+    to_balance -= amount;
+    balances_store.set(to.as_slice(), &to_balance.to_be_bytes());
+
+    Ok(())
+}

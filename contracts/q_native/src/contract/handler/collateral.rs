@@ -1,15 +1,15 @@
 use cosmwasm_std::{
     log, Api, Binary, CanonicalAddr, Env, Extern, HandleResponse, HumanAddr, InitResponse, Querier,
-    ReadonlyStorage, StdError, StdResult, Storage, Uint128,
+    ReadonlyStorage, StdError, StdResult, Storage, Uint128, BankMsg
 };
 
 use std::convert::TryInto;
 
-use crate::state::{get_state, set_state, get_config, set_config};
+use crate::state::{get_state, set_state, get_config, set_config, set_borrow_balance, get_borrow_balance, BorrowSnapshot};
 
 use crate::contract::handler::interest_model::{get_borrow_rate};
 use crate::contract::handler::exponential::truncate;
-use crate::contract::handler::token::mint_tokens;
+use crate::contract::handler::token::{mint_tokens, burn_tokens};
 
 pub fn try_repay_borrow<S: Storage, A: Api, Q: Querier>(
     deps: &mut Extern<S, A, Q>,
@@ -26,6 +26,69 @@ pub fn try_repay_borrow<S: Storage, A: Api, Q: Querier>(
     Ok(res)
 }
 
+pub fn try_borrow<S: Storage, A: Api, Q: Querier>(
+    deps: &mut Extern<S, A, Q>,
+    env: Env,
+    borrow_amount: Uint128
+) -> StdResult<HandleResponse> {
+
+    accrue_interest(deps, env.clone())?;
+
+    let current_block = env.block.height;
+    let state = get_state(&deps.storage)?;
+    if current_block != state.block_number {
+        return Err(StdError::generic_err(format!(
+            "Market is not fresh: current_block: {}, market_block: {}",
+             current_block, state.block_number)
+            )
+        );
+    }
+
+    // TODO: get query from controller contract whether the sender is allowed to borrow
+
+    // Check if the pool has enough balance to lend to the sender
+    if state.cash < borrow_amount.u128() { 
+        return Err(StdError::generic_err(format!(
+            "The lending pool has insufficient cash: redeem_amount: {}, pool_reserve: {}",
+             redeem_native, state.cash)
+            )
+        );
+    }
+
+    // Get borrow balance of the sender
+    let sender_raw = deps.api.canonical_address(&env.message.sender)?;
+    // get borrow balance
+    let account_borrow = get_account_borrow(deps, env.clone());
+    let new_account_borrow = account_borrow +  borrow_amount.u128();
+    
+
+    // Set new cash amount for contract
+    let mut new_state = get_state(&deps.storage)?;
+    new_state.cash -= mint_amount;
+    new_state.total_borrows += borrow_amount.u128();
+    set_state(&mut deps.storage, new_state);
+
+    // Set new borrow balance for the sender
+    let new_borrow_balance = BorrowSnapshot {
+        principal: new_account_borrow,
+        interestIndex: new_state.borrow_index
+    }
+    set_borrow_balance(&deps.storage, &sender_raw, &new_borrow_balance);
+    
+    
+    let res = HandleResponse {
+        messages: vec![],
+        log: vec![
+            log("action", "borrow"),
+            log("sender", env.message.sender.as_str()),
+            log("new_account_borrow", new_account_borrow.clone()),
+            log("new_total_borrows", new_state.clone().total_borrows)
+        ],
+        data: None,
+    };
+    Ok(res)
+}
+
 pub fn try_mint<S: Storage, A: Api, Q: Querier>(
     deps: &mut Extern<S, A, Q>,
     env: Env,
@@ -34,6 +97,16 @@ pub fn try_mint<S: Storage, A: Api, Q: Querier>(
     accrue_interest(deps, env.clone())?;
 
     let current_block = env.block.height;
+    let state = get_state(&deps.storage)?;
+    if current_block != state.block_number {
+        return Err(StdError::generic_err(format!(
+            "Market is not fresh: current_block: {}, market_block: {}",
+             current_block, state.block_number)
+            )
+        );
+    }
+
+    // TODO: get query from controller contract whether the sender is allowed to borrow
 
     // Check native currency transfer
     let mint_amount = env.message.sent_funds[0].amount.u128(); 
@@ -47,7 +120,12 @@ pub fn try_mint<S: Storage, A: Api, Q: Querier>(
     let mut new_config = get_config(&deps.storage)?;
     new_config.total_supply += token_mint_amount;
 
-    set_config(&mut deps.storage, &new_config);
+    // Set new cash amount for contract
+    let mut new_state = get_state(&deps.storage)?;
+    new_state.cash += mint_amount;
+    set_state(&mut deps.storage, new_state);
+
+    set_config(&mut deps.storage, &new_config)?;
 
     // Mint token to the sender
     let recipient_address_raw = deps.api.canonical_address(&env.message.sender)?;
@@ -72,12 +150,87 @@ pub fn try_mint<S: Storage, A: Api, Q: Querier>(
 pub fn try_redeem<S: Storage, A: Api, Q: Querier>(
     deps: &mut Extern<S, A, Q>,
     env: Env,
+    redeem_tokens_in: Uint128
 ) -> StdResult<HandleResponse> {
+    accrue_interest(deps, env.clone())?;
+
+    let current_block = env.block.height;
+    let state = get_state(&deps.storage)?;
+    if current_block != state.block_number {
+        return Err(StdError::generic_err(format!(
+            "Market is not fresh: current_block: {}, market_block: {}",
+             current_block, state.block_number)
+            )
+        );
+    }
+
+    // TODO: get query from controller contract whether the sender is allowed to borrow
+
+    // Get exchange rate derived from borrow and reserve
+    let exchange_rate = get_exchange_rate(deps, env.clone())?;
+
+    let redeem_native_in = env.message.sent_funds[0].amount.u128();
+    if redeem_tokens_in.u128() != 0 && redeem_native_in != 0 {
+        return Err(StdError::generic_err(format!(
+            "one of redeeming tokens or asset must be 0: redeeming_cw20: {}, redeeming_native_currency: {}",
+             redeem_tokens_in.u128(), redeem_native_in)
+            )
+        );
+    }
+    // Calculate redeem amount
+    let (redeem_native, redeem_tokens) = match redeem_tokens_in.u128() {
+        x if x > 0 => {
+            // Set new cash amount for contract
+            let mut new_state = get_state(&deps.storage)?;
+            new_state.cash -= mint_amount;
+            set_state(&mut deps.storage, new_state);
+            return (truncate(exchange_rate * 100_000_000 * redeem_tokens_in.u128()), redeem_tokens_in.u128()); 
+        },
+        _ => {
+            // Set new cash amount for contract
+            let mut new_state = get_state(&deps.storage)?;
+            new_state.cash += mint_amount;
+            set_state(&mut deps.storage, new_state);
+            return (redeem_native_in, truncate(redeem_native_in / (100_000_000 * exchange_rate)));
+        }
+    };
+
+    // Set new config
+    let mut new_config = get_config(&deps.storage)?;
+    new_config.total_supply -= redeem_tokens;
+    set_config(&mut deps.storage, &new_config)?;
+
+    
+
+    // Burn token to the sender
+    let recipient_address_raw = deps.api.canonical_address(&env.message.sender)?;
+    burn_tokens(
+        &mut deps.storage,
+        &recipient_address_raw,
+        redeem_tokens,
+    )?;
+
+    // Check if the pool has enough balance
+    if state.cash < redeem_native {
+        return Err(StdError::generic_err(format!(
+            "The lending pool has insufficient cash: redeem_amount: {}, pool_reserve: {}",
+             redeem_native, state.cash)
+            )
+        );
+    }
+
+
+    // TODO: write defense hook
+
     let res = HandleResponse {
-        messages: vec![],
+        messages: vec![
+            
+        ],
         log: vec![
             log("action", "redeem"),
             log("sender", env.message.sender.as_str()),
+            log("redeem_tokens", redeem_tokens.clone()),
+            log("redeem_native", redeem_native.clone())
         ],
         data: None,
     };
@@ -116,7 +269,7 @@ fn accrue_interest<S: Storage, A: Api, Q: Querier>(deps: &mut Extern<S, A, Q>, e
     new_state.total_borrows = new_total_borrows;
     new_state.total_reserves = new_total_reserves;
 
-    set_state(&mut deps.storage, &new_state);
+    set_state(&mut deps.storage, &new_state)?;
 
 
     Ok(())
@@ -140,4 +293,34 @@ fn get_exchange_rate<S: Storage, A: Api, Q: Querier>(deps: &mut Extern<S, A, Q>,
 
 
     Ok(exchange_rate)
+}
+
+
+fn get_account_borrow<S: Storage, A: Api, Q: Querier>(deps: &mut Extern<S, A, Q>, env: Env) -> StdResult<u128> {
+    let sender_raw = deps.api.canonical_address(env.message.sender)?;
+    let snapshot = get_borrow_balance(&deps.storage, owner: &sender_raw);
+    
+    let borrow_snapsot = match borrow_snapshot {
+        Some(_) => {
+            _
+        },
+        None => {
+            let init_borrow_snapshot = BorrowSnapshot {
+                principal: 0,
+                borrow_index: 0
+            }
+            set_borrow_balance(&deps.storage, &sender_raw, init_borrow_snapshot)?;
+            init_borrow_snapshot
+        }
+    }
+
+    if borrow_snapshot.principal == 0 {
+        // if borrow balance is 0, then borrow index is likey also 0.
+        // Hence, return 0 in this case.
+        return 0
+    }
+
+    let state = get_state(&deps.storage)?;
+    let principal_time_index = borrow_snapshot.principal * state.borrow_index;
+    return principal_time_index / borrow_snapsot.interest_index;
 }

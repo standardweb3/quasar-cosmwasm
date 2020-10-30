@@ -9,6 +9,7 @@ pub static CONFIG_PREFIX: &[u8] = b"config";
 pub static BALANCE_PREFIX: &[u8] = b"balances";
 pub static ALLOWANCE_PREFIX: &[u8] = b"allowance";
 pub static STATE_PREFIX: &[u8] = b"state";
+pub static BORROW_PREFIX: &[u8] = b"borrow";
 
 /// Config struct
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -33,6 +34,12 @@ pub struct State {
     pub reserve_factor: u128,
     pub max_borrow_rate: u128,
     pub borrow_index: u128
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct BorrowSnapshot {
+    pub principal: u128;
+    pub interest_index: u128;
 }
 
 /// Config singleton initialization
@@ -109,4 +116,45 @@ pub fn set_allowance<S: Storage>(
     let mut owner_store = PrefixedStorage::new(owner.as_slice(), &mut allowances_store);
     owner_store.set(spender.as_slice(), &amount.to_be_bytes());
     Ok(())
+}
+
+/// Get borrow balance from address
+pub fn get_borrow_balance<S: Storage>(store: &S, owner: &CanonicalAddr) -> StdResult<u128> {
+    let borrow_balance_store = ReadonlyPrefixedStorage::new(BORROW_PREFIX, store);
+    to_u128(&borrow_balance_store, owner.as_slice())
+}
+
+pub fn set_borrow_balance<S: Storage>(
+    store: &mut S,
+    owner: &CanonicalAddr,
+    snapshot: &BorrowSnapshot,
+) -> StdResult<()> {
+    let mut balances_store = PrefixedStorage::new(BALANCE_PREFIX, store);
+
+    let mut to_balance = to_u128(&balances_store, to.as_slice())?;
+    to_balance += amount;
+    balances_store.set(to.as_slice(), &to_balance.to_be_bytes());
+
+    Ok(())
+}
+
+pub fn get_borrow_balance<S: Storage>(store: &S, owner: &CanonicalAddr) -> Option<BorrowSnapshot> {
+    match ReadonlyBucket::new(BORROW_PREFIX, storage).may_load(owner.as_slice()) {
+        Ok(Some(wrapped_reserves)) => Some(wrapped_reserves),
+        _ => None,
+    }
+}
+
+pub fn set_borrow_balance<S: Storage>(
+    storage: &mut S,
+    owner: &CanonicalAddr,
+    snapshot: Option<BorrowSnapshot>,
+) -> StdResult<()> {
+    match Bucket::new(BORROW_PREFIX, storage).save(owner.as_slice(), &snapshot) {
+        Ok(_) => Ok(()),
+        Err(_) => Err(StdError::generic_err(format!(
+            "Failed to write to the borrow_balance. key: {:?}, value: {:?}",
+            owner, snapshot
+        ))),
+    }
 }
