@@ -75,9 +75,19 @@ pub fn try_borrow<S: Storage, A: Api, Q: Querier>(
     };
     set_borrow_balance(&mut deps.storage, &sender_raw, Some(new_borrow_balance));
     
+    // Transfer native token to the user
+    // TODO: in this case it is hard coded to luna, include denom in contract config
+    let native_transfer: CosmosMsg = CosmosMsg::Bank(BankMsg::Send {
+        from_address: env.contract.address.clone(),
+        to_address: env.message.sender.clone(),
+        amount: vec![Coin {
+            denom: "uluna".to_string(),
+            amount: borrow_amount.clone(),
+        }],
+    });
     
     let res = HandleResponse {
-        messages: vec![],
+        messages: vec![native_transfer],
         log: vec![
             log("action", "borrow"),
             log("sender", env.message.sender.as_str()),
@@ -221,12 +231,23 @@ pub fn try_redeem<S: Storage, A: Api, Q: Querier>(
         );
     }
 
+    // Transfer native token to the user
+    // TODO: in this case it is hard coded to luna, include denom in contract config
+    let native_transfer: CosmosMsg = CosmosMsg::Bank(BankMsg::Send {
+        from_address: env.contract.address.clone(),
+        to_address: env.message.sender.clone(),
+        amount: vec![Coin {
+            denom: "uluna".to_string(),
+            amount: redeem_native.clone(),
+        }],
+    });
+
 
     // TODO: write defense hook
 
     let res = HandleResponse {
         messages: vec![
-            
+            native_transfer
         ],
         log: vec![
             log("action", "redeem"),
