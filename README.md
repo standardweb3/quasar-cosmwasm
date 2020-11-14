@@ -5,7 +5,7 @@
 </p>
 
 [![GitHub license](https://img.shields.io/github/license/quasar-protocol/quasar-cosmwasm)](LICENSE) 
-[![Twitter](https://img.shields.io/twitter/follow/ProtocolQuasar?label=Follow&style=social)](https://twitter.com/SubstrateSwap)
+[![Twitter](https://img.shields.io/twitter/follow/ProtocolQuasar?label=Follow&style=social)](https://twitter.com/ProtocolQuasar)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)]()
 
 
