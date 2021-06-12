@@ -76,7 +76,7 @@ pub fn get_balance<S: Storage>(store: &S, owner: &CanonicalAddr) -> StdResult<u1
 }
 
 // Reads 16 byte storage value into u128
-// Returns zero if key does not exist. Errors if data found that is not 16 bytes
+// Returns zero if key does not exist. Returns 0 if data found that is not 16 bytes
 pub fn to_u128<S: ReadonlyStorage>(store: &S, key: &[u8]) -> StdResult<u128> {
     let result = store.get(key);
     match result {
